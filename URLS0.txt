@@ -1,0 +1,9 @@
+GET/a/b/c
+GET/a/hello/c
+GET/hi9/hello/c
+POST/a/hello/c
+POST/b/hello/c
+POST/c/hello/c
+POST/b/b/a/hello/hello
+GET/what/hello/a
+GET/what/what/hello
