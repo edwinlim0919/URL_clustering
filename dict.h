@@ -14,7 +14,7 @@ struct node {
 
 
 struct node *init_node() {
-    struct node *new_node = (node *) malloc(sizeof(struct node));
+    struct node *new_node = (struct node*) malloc(sizeof(struct node));
     new_node->num_children = 0;
 
     return new_node;
