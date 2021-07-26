@@ -24,8 +24,8 @@ struct node *init_node() {
 
 struct nlist { /* table entry: */
     struct nlist *next; /* next entry in chain */
-    char *name; /* defined name */
-    char *defn; /* replacement text */
+    char *name; /* key */
+    struct node *defn; /* value */
 };
 
 
@@ -54,9 +54,10 @@ struct nlist *lookup(char *s)
 }
 
 
+struct node *strdup_dict_node(struct node *);
 char *strdup_dict(char *);
 /* install: put (name, defn) in hashtab */
-struct nlist *install(char *name, char *defn)
+struct nlist *install(char *name, struct node *defn)
 {
     struct nlist *np;
     unsigned hashval;
@@ -69,9 +70,27 @@ struct nlist *install(char *name, char *defn)
         hashtab[hashval] = np;
     } else /* already there */
         free((void *) np->defn); /*free previous defn */
-    if ((np->defn = strdup_dict(defn)) == NULL)
+    if ((np->defn = strdup_dict_node(defn)) == NULL)
        return NULL;
     return np;
+}
+
+
+void copy_node(struct node *dest, struct node *src) {
+    dest->num_children = src->num_children;
+    for (unsigned i = 0; i < MAX_CHILDREN; i++) {
+        dest->children[i] = src->children[i];
+    }
+}
+
+
+struct node *strdup_dict_node(struct node *s) /* make a duplicate of s */
+{
+    struct node *p;
+    p = init_node();
+    if (p != NULL)
+       copy_node(p, s);
+    return p;
 }
 
 

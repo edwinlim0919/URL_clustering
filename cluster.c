@@ -47,11 +47,23 @@ void cluster_urls(char *url_filename) {
 
 
 void test_dictionary() {
-    install("key", "value");
+    struct node *test_node = init_node();
+    test_node->num_children = 4;
+    install("test_node", test_node);
+    struct nlist *result = lookup("test_node");
+
+    if (result == NULL) {
+        printf("result is NULL\n");
+    } else {
+        printf("result is not NULL\n");
+        struct node *result_node = result->defn;
+        printf("num_children of result_node: %d\n", result_node->num_children);
+    }
 }
 
 
 int main(void) {
     cluster_urls("URLS0.txt");
+    test_dictionary();
     return 0;
 }
