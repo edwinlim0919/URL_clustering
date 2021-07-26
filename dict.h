@@ -33,9 +33,6 @@ struct nlist { /* table entry: */
 };
 
 
-// static struct nlist *hashtab[HASHSIZE]; /* pointer table */
-
-
 /* hash: form hash value for string s */
 unsigned hash(char *s)
 {
