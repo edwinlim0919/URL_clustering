@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dict.h>
+#include "dict.h"
 
 
 const unsigned MAX_URL_LENGTH = 1024;
