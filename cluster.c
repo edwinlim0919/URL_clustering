@@ -49,8 +49,8 @@ void cluster_urls(char *url_filename) {
 void test_dictionary() {
     struct node *test_node = init_node();
     test_node->num_children = 4;
-    install("test_node", test_node);
-    struct nlist *result = lookup("test_node");
+    install("test_node", test_node, test_node->hashtab);
+    struct nlist *result = lookup("test_node", test_node->hashtab);
 
     if (result == NULL) {
         printf("result is NULL\n");

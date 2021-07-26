@@ -3,20 +3,24 @@
 #include <string.h>
 
 
-const unsigned MAX_URL_LENGTH = 1024;
-const unsigned MAX_CHILDREN = 50;
+#define HASHSIZE 101
+#define MAX_URL_LENGTH 1024
+#define MAX_CHILDREN 50
 struct nlist;
 
 
 struct node {
     struct node *children[MAX_CHILDREN];
+    struct nlist *hashtab[HASHSIZE];
     int num_children;
 };
 
 
 struct node *init_node() {
     struct node *new_node = (struct node*) malloc(sizeof(struct node));
-    new_node->num_children = 0;
+    if (new_node != NULL) {
+        new_node->num_children = 0;
+    }
 
     return new_node;
 }
@@ -29,8 +33,7 @@ struct nlist { /* table entry: */
 };
 
 
-#define HASHSIZE 101
-static struct nlist *hashtab[HASHSIZE]; /* pointer table */
+// static struct nlist *hashtab[HASHSIZE]; /* pointer table */
 
 
 /* hash: form hash value for string s */
@@ -44,7 +47,7 @@ unsigned hash(char *s)
 
 
 /* lookup: look for s in hashtab */
-struct nlist *lookup(char *s)
+struct nlist *lookup(char *s, struct nlist *hashtab[HASHSIZE])
 {
     struct nlist *np;
     for (np = hashtab[hash(s)]; np != NULL; np = np->next)
@@ -57,11 +60,11 @@ struct nlist *lookup(char *s)
 struct node *strdup_dict_node(struct node *);
 char *strdup_dict(char *);
 /* install: put (name, defn) in hashtab */
-struct nlist *install(char *name, struct node *defn)
+struct nlist *install(char *name, struct node *defn, struct nlist *hashtab[HASHSIZE])
 {
     struct nlist *np;
     unsigned hashval;
-    if ((np = lookup(name)) == NULL) { /* not found */
+    if ((np = lookup(name, hashtab)) == NULL) { /* not found */
         np = (struct nlist *) malloc(sizeof(*np));
         if (np == NULL || (np->name = strdup_dict(name)) == NULL)
           return NULL;
