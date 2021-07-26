@@ -5,6 +5,7 @@
 
 const unsigned MAX_URL_LENGTH = 1024;
 const unsigned MAX_CHILDREN = 50;
+struct nlist;
 
 
 struct node {
