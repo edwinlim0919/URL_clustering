@@ -3,6 +3,24 @@
 #include <string.h>
 
 
+const unsigned MAX_URL_LENGTH = 1024;
+const unsigned MAX_CHILDREN = 50;
+
+
+struct node {
+    struct node *children[MAX_CHILDREN];
+    int num_children;
+};
+
+
+struct node *init_node() {
+    struct node *new_node = (node *) malloc(sizeof(struct node));
+    new_node->num_children = 0;
+
+    return new_node;
+}
+
+
 struct nlist { /* table entry: */
     struct nlist *next; /* next entry in chain */
     char *name; /* defined name */

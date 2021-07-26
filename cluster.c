@@ -4,24 +4,6 @@
 #include "dict.h"
 
 
-const unsigned MAX_URL_LENGTH = 1024;
-const unsigned MAX_CHILDREN = 50;
-
-
-struct node {
-    struct node *children[MAX_CHILDREN];
-    int num_children;
-};
-
-
-struct node *init_node() {
-    struct node *new_node = malloc(sizeof(struct node));
-    new_node->num_children = 0;
-
-    return new_node;
-}
-
-
 void add_root_child(int *num_root_children, int *max_num_root_children, struct node *root) {
     if ((*num_root_children) == (*max_num_root_children)) {
         // realloc data and add new child node, update ints
