@@ -46,6 +46,11 @@ void cluster_urls(char *url_filename) {
 }
 
 
+void test_dictionary() {
+    install("key", "value");
+}
+
+
 int main(void) {
     cluster_urls("URLS0.txt");
     return 0;
