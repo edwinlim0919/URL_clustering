@@ -1,16 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-
 #define HASHSIZE 101
 #define MAX_URL_LENGTH 1024
-#define MAX_CHILDREN 50
+
+
 struct nlist;
-
-
 struct node {
-    struct node *children[MAX_CHILDREN];
     struct nlist *hashtab[HASHSIZE];
     int num_children;
 };
@@ -78,8 +74,8 @@ struct nlist *install(char *name, struct node *defn, struct nlist *hashtab[HASHS
 
 void copy_node(struct node *dest, struct node *src) {
     dest->num_children = src->num_children;
-    for (unsigned i = 0; i < MAX_CHILDREN; i++) {
-        dest->children[i] = src->children[i];
+    for (unsigned i = 0; i < HASHSIZE; i++) {
+        dest->hashtab[i] = src->hashtab[i];
     }
 }
 
