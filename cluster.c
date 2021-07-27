@@ -4,18 +4,6 @@
 #include "dict.h"
 
 
-void add_root_child(int *num_root_children, int *max_num_root_children, struct node *root) {
-    if ((*num_root_children) == (*max_num_root_children)) {
-        // realloc data and add new child node, update ints
-        
-    } else {
-        // add child node, update ints
-
-    }
-    return;
-}
-
-
 void cluster_urls(char *url_filename) {
     FILE *url_file = fopen(url_filename, "r");
 
@@ -23,10 +11,7 @@ void cluster_urls(char *url_filename) {
         printf("Error: could not open file %s", url_filename);
     }
 
-    // root starts off w/ 32 children, will realloc as it grows
-    int num_root_children = 0;
-    int max_num_root_children = 32;
-    struct node *root = malloc(max_num_root_children * sizeof(struct node*));
+    struct node *root = init_node();
     char buffer[MAX_URL_LENGTH];
 
     while (fgets(buffer, MAX_URL_LENGTH, url_file)) {
