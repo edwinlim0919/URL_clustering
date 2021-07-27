@@ -1,7 +1,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "dict.h"
+
+
+void DFS_search(struct node *root, char URL[MAX_URL_LENGTH]) {
+    struct node *curr_node = root;
+    bool is_leaf = true;
+
+    for (int i = 0; i < HASHSIZE; i++) {
+        char URL_copy[MAX_URL_LENGTH] = "";
+        strcpy(URL_copy, URL);
+        struct nlist *child = curr_node->hashtab[i];
+        if (child) {
+            is_leaf = false;
+        }
+
+        while (child) {
+            strcat(URL_copy, child->name);
+            DFS_search(child->defn, URL_copy);
+
+            child = child->next;
+        }
+    }
+
+    if (is_leaf) {
+        // print out string
+        printf("%s\n", URL);
+    }
+}
 
 
 void cluster_urls(char *url_filename) {
@@ -16,14 +44,33 @@ void cluster_urls(char *url_filename) {
 
     while (fgets(buffer, MAX_URL_LENGTH, url_file)) {
         char *token = strtok(buffer, "/");
+        char *schema = token;
+        struct node *curr_node = root;
 
         while (token != NULL) {
-            printf("%s\n", token);
             token = strtok(NULL, "/");
+
+            if (token) {
+                struct nlist *value = lookup(token, curr_node->hashtab);
+                if (value == NULL) {
+                    // doesn't exist in dictionary yet
+                    struct node *new_node = init_node();
+                    install(token, new_node, curr_node->hashtab);
+                    curr_node = new_node;
+                } else {
+                    curr_node = value->defn;
+                }
+            }
+
+            // printf("%s\n", token);
         }
 
-        printf("\n");
+        // printf("SCHEMA IS: %s\n", schema);
+        // printf("\n\n");
     }
+
+    char empty_URL[MAX_URL_LENGTH] = "";
+    DFS_search(root, empty_URL);
 
     printf("\n");
     fclose(url_file);

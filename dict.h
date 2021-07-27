@@ -7,6 +7,7 @@
 
 struct nlist;
 struct node {
+    // May be beneficial to store a pointer to an array of all the dictionary keys
     struct nlist *hashtab[HASHSIZE];
     int num_children;
 };
