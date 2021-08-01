@@ -10,13 +10,17 @@ struct node {
     // May be beneficial to store a pointer to an array of all the dictionary keys
     struct nlist *hashtab[HASHSIZE];
     int num_children;
+    char *name;
 };
 
 
-struct node *init_node() {
+struct node *init_node(char *name) {
     struct node *new_node = (struct node*) malloc(sizeof(struct node));
     if (new_node != NULL) {
         new_node->num_children = 0;
+        new_node->name = name;
+    } else {
+        printf("FAIL FAIL FAIL FAIL FAIL FAIL FAIL FAIL FAIL FAIL\n");
     }
 
     return new_node;
@@ -84,7 +88,7 @@ void copy_node(struct node *dest, struct node *src) {
 struct node *strdup_dict_node(struct node *s) /* make a duplicate of s */
 {
     struct node *p;
-    p = init_node();
+    p = init_node(s->name);
     if (p != NULL)
        copy_node(p, s);
     return p;

@@ -1,5 +1,7 @@
 GET/a/b/c
+GET/a/b/d
 GET/a/hello/c
+GET/a/hello/d
 GET/hi9/hello/c
 POST/a/hello/c
 POST/b/hello/c
