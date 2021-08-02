@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <string.h>
+#include <stdbool.h>
 #include "header.h"
 #include "dictionary.h"
 
@@ -189,7 +190,8 @@ struct node *init_node(char *name) {
     return NULL;
   }
 
-  new_node->name = name;
+  new_node->name = (char*) malloc(sizeof(char) * MAX_URL_LENGTH);
+  strcpy(new_node->name, name);
   new_node->num_children = 0;
   new_node->max_children = 32;
   new_node->dict = InitDictionary();
@@ -223,6 +225,34 @@ void add_child(struct node *parent, struct node *child) {
 }
 
 
+void DFS_debug(struct node *curr_node) {
+  for (int i = 0; i < curr_node->num_children; i++) {
+    char *child_key = curr_node->children[i];
+    printf("%s\n", child_key);
+  }
+}
+
+
+void DFS_search(struct node *curr_node, char URL[MAX_URL_LENGTH]) {
+  if (curr_node == NULL) {
+    return;
+  }
+
+  for (int i = 0; i < curr_node->num_children; i++) {
+    char *child_key = curr_node->children[i];
+    struct node *child = GetDataWithKey(curr_node->dict, child_key);
+    char URL_copy[MAX_URL_LENGTH] = "";
+    strcpy(URL_copy, URL);
+    strcat(URL_copy, child_key);
+    DFS_search(child, URL_copy);
+  }
+
+  if (curr_node->num_children == 0) {
+    printf("%s\n", URL);
+  }
+}
+
+
 void cluster_urls(char *url_filename) {
   FILE *url_file = fopen(url_filename, "r");
 
@@ -248,28 +278,26 @@ void cluster_urls(char *url_filename) {
               if (value == NULL) {
                 // Create new dictionary child
                 printf("CREATING NEW NODE %s FOR %s\n", token, curr_node->name);
-        
                 struct node *child = init_node(token);
                 add_child(curr_node, child);
                 curr_node = child;
               } else {
                 // Use existing child
                 printf("USING EXISTING NODE %s FROM %s\n", value->name, curr_node->name);
-
                 curr_node = value;
               }
-
-              // printf("%s\n", token);
           }
       }
-
       printf("SCHEMA IS: %s\n", schema);
       printf("\n\n");
   }
 
+  printf("\n\n\n");
   char empty_URL[MAX_URL_LENGTH] = "";
+  DFS_search(root, empty_URL);
+  printf("\n\n\n");
+  DFS_debug(root);
 
-  printf("\n");
   fclose(url_file);
   return;
 }
