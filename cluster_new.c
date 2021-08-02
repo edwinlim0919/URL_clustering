@@ -1,16 +1,7 @@
-// Filename: dictionary.c
-// Descriptions: Together with interface dictionary.h, this dictionary.c
-//               provides a library (general purpose) for dictionary-like data structure
-//               based on a hash table.
-//               Each elements will be assigned with a key, and stored in DNODE. These functions
-//               provide a solution for adding/removing/searching elements inside a dictionary
-//               with optimized speed.
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <string.h>
-
 #include "header.h"
 #include "dictionary.h"
 
@@ -25,15 +16,6 @@ int make_hash(char *s)
 }
 
 
-//! \brief Generate the hash slot number for each string.
-// int make_hash(char* c) {
-//   return (hash1(c)%(MAX_HASH_SLOT - 1));
-// }
-
-/*pseudocode*/
-// 1 malloc a DICTIONARY to d
-// 2 initialize start end to null
-// 3 initialize each hash slot to null
 DICTIONARY* InitDictionary() {
   DICTIONARY* d = (DICTIONARY*)malloc(sizeof(DICTIONARY));
   MALLOC_CHECK(d);
@@ -45,11 +27,7 @@ DICTIONARY* InitDictionary() {
   return d;
 }
 
-/*pseudocode*/
-// 1 while (go through each DNODE)
-// 2  free the data of DNODE
-// 3  free this DNODE
-// 4 end while
+
 void CleanDictionary(DICTIONARY* dict) {
   DNODE* d = dict->start;
   while (d != NULL) {
@@ -61,23 +39,7 @@ void CleanDictionary(DICTIONARY* dict) {
   }
 }
 
-/*pseudocode*/
-// 1 h = hash value of the key
-// 2 if (dict->start is null, implies dict is empty)
-// 3   add the new DNODE to the dict,
-// 4   updating start and end pointer
-// 5 else (there is already some DNODE in dict)
-// 6   if (the h slot is occupied)
-// 7     for each DNODE with hash value h
-// 8        find is there a DNODE with the same key
-// 9        if find, do nothing
-// 10    end
-// 11    if (not find a DNODE with the same key)
-// 12      add the DNODE after the last DNODE with hash value h
-// 13  else (the h slot is not occupied)
-// 14    add the new DNODE to the end, update end
-// 15    update hashtable
-// 16 Done
+
 void DAdd(DICTIONARY* dict, void* data, char* key) {
   MYASSERT(strlen(key) > 0);
   int h = make_hash(key);
@@ -146,8 +108,6 @@ void DAdd(DICTIONARY* dict, void* data, char* key) {
 }
 
 
-/*Pseudocode*/
-// 1 
 void DRemove(DICTIONARY* dict, char* key) {
   DNODE* d;  
   int h = make_hash(key);
@@ -182,14 +142,7 @@ void DRemove(DICTIONARY* dict, char* key) {
   }
 }
 
-/*Pseudocode*/
-// 1 get the hash value of key, save to h
-// 2 get the pointer of hash slot h
-// 3   for (each DNODE d with same hash value)
-// 4     if (d is the same key)
-// 5       return data of d
-// 6   end
-// 7 return null
+
 void* GetDataWithKey(DICTIONARY* dict, char* key) {
   DNODE* d;  
   int h = make_hash(key);
@@ -204,14 +157,7 @@ void* GetDataWithKey(DICTIONARY* dict, char* key) {
   return NULL;
 }
 
-/*Pseudocode*/
-// 1 get the hash value of key, save to h
-// 2 get the pointer of hash slot h
-// 3   for (each DNODE d with same hash value)
-// 4     if (d is the same key)
-// 5       return d
-// 6   end
-// 7 return null
+
 DNODE* GetDNODEWithKey(DICTIONARY* dict, char* key) {
   DNODE* d;  
   int h = make_hash(key);
@@ -227,6 +173,56 @@ DNODE* GetDNODEWithKey(DICTIONARY* dict, char* key) {
 }
 
 
+struct node {
+  char *name;
+  char **children;
+  int num_children;
+  int max_children;
+  DICTIONARY *dict;
+};
+
+
+struct node *init_node(char *name) {
+  struct node *new_node = (struct node*) malloc(sizeof(struct node));
+  if (new_node == NULL) {
+    printf("Failed to malloc new_node in INIT_NODE.\n");
+    return NULL;
+  }
+
+  new_node->name = name;
+  new_node->num_children = 0;
+  new_node->max_children = 32;
+  new_node->dict = InitDictionary();
+  new_node->children = (char**) malloc(sizeof(char*) * new_node->max_children);
+  if (new_node->children == NULL) {
+    printf("Failed to malloc new_node->children in INIT_NODE.\n");
+    return NULL;
+  }
+
+  return new_node;
+}
+
+
+void resize_children(struct node *resize_node) {
+  resize_node->max_children = resize_node->max_children * 2;
+  resize_node->children = (char**) realloc(resize_node->children, sizeof(char*) * resize_node->max_children);
+  if (resize_node->children == NULL) {
+    printf("Failed to realloc resize_node->children in RESIZE_CHILDREN.\n");
+  }
+}
+
+
+void add_child(struct node *parent, struct node *child) {
+  if (parent->num_children == parent->max_children) {
+    resize_children(parent);
+  } 
+
+  DAdd(parent->dict, child, child->name);
+  parent->children[parent->num_children] = child->name;
+  parent->num_children++;
+}
+
+
 void cluster_urls(char *url_filename) {
   FILE *url_file = fopen(url_filename, "r");
 
@@ -235,27 +231,43 @@ void cluster_urls(char *url_filename) {
   }
 
   char buffer[MAX_URL_LENGTH];
+  struct node *root = init_node("root");
 
   while (fgets(buffer, MAX_URL_LENGTH, url_file)) {
       char *token = strtok(buffer, "/");
       char *schema = token;
+      struct node *curr_node = root;
 
       while (token != NULL) {
           token = strtok(NULL, "/");
 
           if (token) {
               token[strcspn(token, "\n")] = 0;
-              printf("%s\n", token);
+              struct node *value = GetDataWithKey(curr_node->dict, token);
+
+              if (value == NULL) {
+                // Create new dictionary child
+                printf("CREATING NEW NODE %s FOR %s\n", token, curr_node->name);
+        
+                struct node *child = init_node(token);
+                add_child(curr_node, child);
+                curr_node = child;
+              } else {
+                // Use existing child
+                printf("USING EXISTING NODE %s FROM %s\n", value->name, curr_node->name);
+
+                curr_node = value;
+              }
+
+              // printf("%s\n", token);
           }
       }
 
       printf("SCHEMA IS: %s\n", schema);
-      printf("\n");
+      printf("\n\n");
   }
 
   char empty_URL[MAX_URL_LENGTH] = "";
-  // DFS_search(root, empty_URL);
-  // DFS_debug(root);
 
   printf("\n");
   fclose(url_file);
