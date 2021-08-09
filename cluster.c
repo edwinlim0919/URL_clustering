@@ -174,6 +174,7 @@ DNODE* GetDNODEWithKey(DICTIONARY* dict, char* key) {
 }
 
 
+// Nodes that make up the URL tree
 struct node {
   char *name;
   char **children;
@@ -183,6 +184,7 @@ struct node {
 };
 
 
+// Initializes a URL tree node given a string
 struct node *init_node(char *name) {
   struct node *new_node = (struct node*) malloc(sizeof(struct node));
   if (new_node == NULL) {
@@ -205,6 +207,7 @@ struct node *init_node(char *name) {
 }
 
 
+// Reallocs more space for children when node runs out of room
 void resize_children(struct node *resize_node) {
   resize_node->max_children = resize_node->max_children * 2;
   resize_node->children = (char**) realloc(resize_node->children, sizeof(char*) * resize_node->max_children);
@@ -214,6 +217,7 @@ void resize_children(struct node *resize_node) {
 }
 
 
+// Adds the given child node to the given parent node
 void add_child(struct node *parent, struct node *child) {
   if (parent->num_children == parent->max_children) {
     resize_children(parent);
@@ -225,6 +229,7 @@ void add_child(struct node *parent, struct node *child) {
 }
 
 
+// For debugging individual nodes of the URL tree
 void DFS_debug(struct node *curr_node) {
   for (int i = 0; i < curr_node->num_children; i++) {
     char *child_key = curr_node->children[i];
@@ -233,6 +238,7 @@ void DFS_debug(struct node *curr_node) {
 }
 
 
+// Prints out all URL paths stemming from current node
 void DFS_search(struct node *curr_node, char URL[MAX_URL_LENGTH]) {
   if (curr_node == NULL) {
     return;
@@ -253,6 +259,41 @@ void DFS_search(struct node *curr_node, char URL[MAX_URL_LENGTH]) {
 }
 
 
+// Counts the number of URL paths stemming from the current node
+int DFS_enumerate(struct node *curr_node) {
+  if (curr_node == NULL) {
+    return 0;
+  } else if (curr_node->num_children == 0) {
+    return 1;
+  }
+
+  int curr_count = 0;
+
+  for (int i = 0; i < curr_node->num_children; i++) {
+    char *child_key = curr_node->children[i];
+    struct node *child = GetDataWithKey(curr_node->dict, child_key);
+    curr_count += DFS_enumerate(child);
+  }
+
+  return curr_count;
+}
+
+
+// Populates list of URL's with all URL paths stemming from current node
+int DFS_find_URLs(struct node *curr_node, int URL_index, char *URL_list[MAX_URL_LENGTH], char URL[MAX_URL_LENGTH]) {
+  if (curr_node == NULL) {
+    return 0;
+  } 
+
+  for (int i = 0; i < curr_node->num_children; i++) {
+    char *child_key = curr_node->children[i];
+    struct node *child = GetDataWithKey(curr_node->dict, child_key);
+
+  }
+}
+
+
+// Main algorithm to cluster a .txt file of URLs
 void cluster_urls(char *url_filename) {
   FILE *url_file = fopen(url_filename, "r");
 
@@ -267,6 +308,7 @@ void cluster_urls(char *url_filename) {
       char *token = strtok(buffer, "/");
       char *schema = token;
       struct node *curr_node = root;
+      struct node *fork_point = NULL;
 
       while (token != NULL) {
           token = strtok(NULL, "/");
@@ -276,33 +318,49 @@ void cluster_urls(char *url_filename) {
               struct node *value = GetDataWithKey(curr_node->dict, token);
 
               if (value == NULL) {
-                // Create new dictionary child
+                // No URL match, create new dictionary child
+
+                if (fork_point == NULL) {
+                    fork_point = curr_node;
+                    printf("RECORDING FORK POINT: %s\n", curr_node->name);
+                }
+
                 printf("CREATING NEW NODE %s FOR %s\n", token, curr_node->name);
                 struct node *child = init_node(token);
                 add_child(curr_node, child);
                 curr_node = child;
               } else {
-                // Use existing child
+                // URL matches so far, use existing child
                 printf("USING EXISTING NODE %s FROM %s\n", value->name, curr_node->name);
                 curr_node = value;
               }
           }
       }
+
+      if (fork_point) {
+          // After URL is added, start clustering from fork point if URL is new
+          int num_URLs = DFS_enumerate(fork_point);
+
+      }
+
       printf("SCHEMA IS: %s\n", schema);
       printf("\n\n");
   }
 
-  printf("\n\n\n");
   char empty_URL[MAX_URL_LENGTH] = "";
+
+  printf("\n\n\n");
   DFS_search(root, empty_URL);
   printf("\n\n\n");
-  DFS_debug(root);
+  printf("URL COUNT: %d\n", DFS_enumerate(root));
+  printf("\n\n\n");
 
   fclose(url_file);
   return;
 }
 
 
+// Basic dictionary test
 void test_dictionary() {
   DICTIONARY *new_dict = InitDictionary();
   DAdd(new_dict, "value", "key");
