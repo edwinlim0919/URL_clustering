@@ -242,6 +242,8 @@ void DFS_debug(struct node *curr_node) {
 void DFS_search(struct node *curr_node, char URL[MAX_URL_LENGTH]) {
   if (curr_node == NULL) {
     return;
+  } else if (curr_node->num_children == 0) {
+    printf("%s\n", URL);
   }
 
   for (int i = 0; i < curr_node->num_children; i++) {
@@ -251,10 +253,6 @@ void DFS_search(struct node *curr_node, char URL[MAX_URL_LENGTH]) {
     strcpy(URL_copy, URL);
     strcat(URL_copy, child_key);
     DFS_search(child, URL_copy);
-  }
-
-  if (curr_node->num_children == 0) {
-    printf("%s\n", URL);
   }
 }
 
@@ -280,15 +278,48 @@ int DFS_enumerate(struct node *curr_node) {
 
 
 // Populates list of URL's with all URL paths stemming from current node
-int DFS_find_URLs(struct node *curr_node, int URL_index, char *URL_list[MAX_URL_LENGTH], char URL[MAX_URL_LENGTH]) {
+int DFS_find_URLs(struct node *curr_node, int URL_index, char **URL_list, char URL[MAX_URL_LENGTH]) {
   if (curr_node == NULL) {
-    return 0;
-  } 
+    return URL_index;
+  } else if (curr_node->num_children == 0) {
+    *(URL_list + URL_index) = (char *) malloc(MAX_URL_LENGTH * sizeof(char));
+    strcpy(*(URL_list + URL_index), URL);
+    return URL_index + 1;
+  }
 
   for (int i = 0; i < curr_node->num_children; i++) {
     char *child_key = curr_node->children[i];
     struct node *child = GetDataWithKey(curr_node->dict, child_key);
+    char URL_copy[MAX_URL_LENGTH] = "";
+    strcpy(URL_copy, URL);
+    strcat(URL_copy, child_key);
+    URL_index = DFS_find_URLs(child, URL_index, URL_list, URL_copy);
+  }
 
+  return URL_index;
+}
+
+
+// Returns -1 if:
+//    URLs are of different length
+//    URLs differ in more than one index
+// Else:
+//    Returns index at which URLs differ
+int compare_URLs(char URL1[MAX_URL_LENGTH], char URL2[MAX_URL_LENGTH]) {
+  char *token1 = strtok(URL1, "/");
+  char *token2 = strtok(URL2, "/");
+  
+
+  while (token1 != NULL && token2 != NULL) {
+
+  }
+}
+
+
+// Prints all URLs pointed to by URL_list
+void print_URLs(char *URL_list[MAX_URL_LENGTH], int num_URLs) {
+  for (int i = 0; i < num_URLs; i++) {
+    printf("%s\n", URL_list[i]);
   }
 }
 
@@ -347,12 +378,17 @@ void cluster_urls(char *url_filename) {
       printf("\n\n");
   }
 
-  char empty_URL[MAX_URL_LENGTH] = "";
-
   printf("\n\n\n");
-  DFS_search(root, empty_URL);
+  char empty_URL1[MAX_URL_LENGTH] = "";
+  DFS_search(root, empty_URL1);
   printf("\n\n\n");
-  printf("URL COUNT: %d\n", DFS_enumerate(root));
+  int URL_COUNT = DFS_enumerate(root);
+  printf("URL COUNT: %d\n", URL_COUNT);
+  printf("\n\n\n");
+  char **URL_list = (char **) malloc(sizeof(char *) * URL_COUNT);
+  char empty_URL2[MAX_URL_LENGTH] = "";
+  DFS_find_URLs(root, 0, URL_list, empty_URL2);
+  print_URLs(URL_list, URL_COUNT);
   printf("\n\n\n");
 
   fclose(url_file);
@@ -371,6 +407,5 @@ void test_dictionary() {
 
 int main(void) {
   cluster_urls("URLS0.txt");
-  test_dictionary();
   return 0;
 }
