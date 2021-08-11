@@ -306,12 +306,29 @@ int DFS_find_URLs(struct node *curr_node, int URL_index, char **URL_list, char U
 // Else:
 //    Returns index at which URLs differ
 int compare_URLs(char URL1[MAX_URL_LENGTH], char URL2[MAX_URL_LENGTH]) {
-  char *token1 = strtok(URL1, "/");
-  char *token2 = strtok(URL2, "/");
-  
+  char *save_ptr1, *save_ptr2;
+  char *token1 = strtok_r(URL1, "/", &save_ptr1);
+  char *token2 = strtok_r(URL2, "/", &save_ptr2);
+  int diff_count = 0;
+  int curr_index = 0;
+  int diff_index = 0;
 
   while (token1 != NULL && token2 != NULL) {
 
+    if (strcmp(token1, token2) != 0) {
+      diff_index = curr_index;
+      diff_count++;
+    }
+
+    token1 = strtok_r(NULL, "/", &save_ptr1);
+    token2 = strtok_r(NULL, "/", &save_ptr2);
+    curr_index++;
+  }
+
+  if ((token1 && !token2) || (!token1 && token2) || (diff_count > 1)) {
+    return -1;
+  } else {
+    return diff_index;
   }
 }
 
@@ -405,7 +422,43 @@ void test_dictionary() {
 }
 
 
+// URL comparison test
+void test_URL_comparison() {
+  // Different at index 1
+  char URL1[MAX_URL_LENGTH] = "first/a/third";
+  char URL2[MAX_URL_LENGTH] = "first/b/third";
+  int result = compare_URLs(URL1, URL2);
+  printf("Result should be: 1 and is: %d\n", result);
+
+  // Different in two locations
+  char URL3[MAX_URL_LENGTH] = "first/a/third";
+  char URL4[MAX_URL_LENGTH] = "first/b/notthird";
+  result = compare_URLs(URL3, URL4);
+  printf("Result should be: -1 and is: %d\n", result);
+
+  // Different lengths
+  char URL5[MAX_URL_LENGTH] = "first/a/third";
+  char URL6[MAX_URL_LENGTH] = "first/b";
+  result = compare_URLs(URL5, URL6);
+  printf("Result should be: -1 and is: %d\n", result);
+
+  // Different at index 0
+  char URL7[MAX_URL_LENGTH] = "a/second/third";
+  char URL8[MAX_URL_LENGTH] = "b/second/third";
+  result = compare_URLs(URL7, URL8);
+  printf("Result should be: 0 and is: %d\n", result);
+
+  // Different at index 3
+  char URL9[MAX_URL_LENGTH] = "first/second/third/a";
+  char URL10[MAX_URL_LENGTH] = "first/second/third/b";
+  result = compare_URLs(URL9, URL10);
+  printf("Result should be: 3 and is: %d\n", result);
+}
+
+
 int main(void) {
   cluster_urls("URLS0.txt");
+  printf("\n\n\n");
+  test_URL_comparison();
   return 0;
 }
