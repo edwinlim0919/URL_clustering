@@ -3,6 +3,7 @@
 #define KEY_LENGTH 1000
 #define MAX_URL_LENGTH 1024
 #define MAX_HASH_SLOT 10000
+#define SIMILARITY_THRESHOLD 10
 
 
 typedef struct _DNODE {
