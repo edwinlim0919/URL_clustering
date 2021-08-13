@@ -343,19 +343,35 @@ void print_URLs(char *URL_list[MAX_URL_LENGTH], int num_URLs) {
 
 // Returns a list of URL indices if similarity threshold is reached, else NULL: O(n^2), n = # of URLs
 int *find_similarity(char **URL_list, int num_URLs) {
-  int *index_list = (int *) calloc(SIMILARITY_THRESHOLD, sizeof(int));
+  // Index list will store all indices at which URLs differ in only one position, will also hold where URLs differ in the last element
+  int *index_list = (int *) calloc(SIMILARITY_THRESHOLD+1, sizeof(int));
 
   for (int i = 0; i < num_URLs; i++) {
     int curr_index = 0;
+    int prev_comparison = -2;
     *(index_list + curr_index) = i;
     curr_index++;
 
     for (int j = 0; j < num_URLs; j++) {
+      int URL_comparison = compare_URLs(*(URL_list + i), *(URL_list + j));
 
-      if (i != j && compare_URLs(*(URL_list + i), *(URL_list + j)) != -1) {
-        // The URLs are the same, except for the word at index compare_URLs
-        *(index_list + curr_index) = j;
-        curr_index++;
+      if (i != j && URL_comparison != -1) {
+        // The URLs are the same, except for the word at index URL_comparison
+        if (prev_comparison == -2) {
+          *(index_list + SIMILARITY_THRESHOLD) = URL_comparison;
+          *(index_list + curr_index) = j;
+          prev_comparison = URL_comparison;
+          curr_index++;
+        } else {
+
+          if (URL_comparison == prev_comparison) {
+            *(index_list + curr_index) = j;
+            prev_comparison = URL_comparison;
+            curr_index++;
+          } else {
+            continue;
+          }
+        }
       }
     }
 
@@ -363,7 +379,7 @@ int *find_similarity(char **URL_list, int num_URLs) {
       return index_list;
     } else {
       free(index_list);
-      index_list = (int *) calloc(SIMILARITY_THRESHOLD, sizeof(int));
+      index_list = (int *) calloc(SIMILARITY_THRESHOLD+1, sizeof(int));
     }
   }
 
@@ -378,6 +394,21 @@ int *find_similarity(char **URL_list, int num_URLs) {
 // Frees a tree starting from node curr_node
 void free_tree(struct node *curr_node) {
 
+  if (curr_node == NULL) {
+    return;
+  }
+
+  for (int i = 0; i < curr_node->num_children; i++) {
+    char *child_key = *(curr_node->children + i);
+    struct node *child = (struct node *) GetDataWithKey(curr_node->dict, child_key);
+    free_tree(child);
+  }
+
+  free(curr_node->children);
+  CleanDictionary(curr_node->dict);
+  free(curr_node->dict);
+  free(curr_node->name);
+  free(curr_node);
 }
 
 
@@ -435,10 +466,14 @@ void cluster_urls(char *url_filename) {
 
           if (index_list) {
             printf("SIMILARITY EXISTS!\n");
-            for (int i = 0; i < SIMILARITY_THRESHOLD; i++) {
+
+            // Delete duplicate branches
+            for (int i = 1; i < SIMILARITY_THRESHOLD; i++) {
               int URL_list_index = *(index_list + i);
               char *URL = *(URL_list + URL_list_index);
               printf("%s\n", URL);
+
+              
             }
           }
       }
