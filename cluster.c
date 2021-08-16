@@ -341,45 +341,51 @@ void print_URLs(char *URL_list[MAX_URL_LENGTH], int num_URLs) {
 }
 
 
-// Returns a list of URL indices if similarity threshold is reached, else NULL: O(n^2), n = # of URLs
+// Returns a list of URL indices if similarity threshold is reached, else NULL: O(n^3), n = # of URLs
 int *find_similarity(char **URL_list, int num_URLs) {
   // Index list will store all indices at which URLs differ in only one position, will also hold where URLs differ in the last element
   int *index_list = (int *) calloc(SIMILARITY_THRESHOLD+1, sizeof(int));
 
   for (int i = 0; i < num_URLs; i++) {
     int curr_index = 0;
-    int prev_comparison = -2;
     *(index_list + curr_index) = i;
     curr_index++;
 
     for (int j = 0; j < num_URLs; j++) {
+      // When prev_comparison == -2, that means we don't have an index value for it yet
+      int prev_comparison = -2;
+      int curr_index = 1;
       int URL_comparison = compare_URLs(*(URL_list + i), *(URL_list + j));
 
       if (i != j && URL_comparison != -1) {
-        // The URLs are the same, except for the word at index URL_comparison
-        if (prev_comparison == -2) {
-          *(index_list + SIMILARITY_THRESHOLD) = URL_comparison;
-          *(index_list + curr_index) = j;
-          prev_comparison = URL_comparison;
-          curr_index++;
-        } else {
+        // The URLs are the same, except for the word at index URL_comparison, compare with the rest of the indices
+        *(index_list + curr_index) = j;
+        curr_index++;
 
-          if (URL_comparison == prev_comparison) {
-            *(index_list + curr_index) = j;
+        for (int j_new = j+1; j_new < num_URLs && j_new != i; j_new++) {
+          if (prev_comparison == -2) {
+            *(index_list + SIMILARITY_THRESHOLD) = URL_comparison;
             prev_comparison = URL_comparison;
+            *(index_list + curr_index) = j_new;
             curr_index++;
           } else {
-            continue;
+
+            if (URL_comparison == prev_comparison) {
+              *(index_list + curr_index) = j_new;
+              curr_index++;
+            } else {
+              continue;
+            }
           }
         }
-      }
-    }
 
-    if (curr_index == SIMILARITY_THRESHOLD) {
-      return index_list;
-    } else {
-      free(index_list);
-      index_list = (int *) calloc(SIMILARITY_THRESHOLD+1, sizeof(int));
+        if (curr_index == SIMILARITY_THRESHOLD) {
+          return index_list;
+        } else {
+          free(index_list);
+          index_list = (int *) calloc(SIMILARITY_THRESHOLD+1, sizeof(int));
+        }
+      }
     }
   }
 
@@ -466,6 +472,11 @@ void cluster_urls(char *url_filename) {
 
           if (index_list) {
             printf("SIMILARITY EXISTS!\n");
+            int diff_index = *(index_list + SIMILARITY_THRESHOLD);
+
+
+            // Save one copy of the duplicate end of the URL
+
 
             // Delete duplicate branches
             for (int i = 1; i < SIMILARITY_THRESHOLD; i++) {
