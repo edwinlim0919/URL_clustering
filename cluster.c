@@ -488,22 +488,17 @@ void cluster_urls(char *url_filename) {
           char **URL_list = (char **) malloc(sizeof(char *) * num_URLs);
           char empty_URL[MAX_URL_LENGTH] = "";
           DFS_find_URLs(fork_point, 0, URL_list, empty_URL);
-
-          printf("FORK POINT REACHED!\n");
-          print_URLs(URL_list, num_URLs);
-
           int *index_list = find_similarity(URL_list, num_URLs);
 
           if (index_list) {
             printf("SIMILARITY EXISTS!\n");
-            print_URLs(URL_list, num_URLs);
 
             int diff_index = *(index_list + SIMILARITY_THRESHOLD);
 
             // Delete duplicate branches
             for (int i = 0; i < SIMILARITY_THRESHOLD; i++) {
               int URL_list_index = *(index_list + i);
-              // char *URL = *(URL_list + URL_list_index);
+              char *URL = *(URL_list + URL_list_index);
               char *URL = URL_list[URL_list_index];
               printf("%s\n", URL);
 
