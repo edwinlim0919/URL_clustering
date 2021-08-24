@@ -292,6 +292,11 @@ int DFS_find_URLs(struct node *curr_node, int URL_index, char **URL_list, char U
     struct node *child = GetDataWithKey(curr_node->dict, child_key);
     char URL_copy[MAX_URL_LENGTH] = "";
     strcpy(URL_copy, URL);
+
+    if (strcmp(URL_copy, "") != 0) {
+      strcat(URL_copy, "/");
+    }
+
     strcat(URL_copy, child_key);
     URL_index = DFS_find_URLs(child, URL_index, URL_list, URL_copy);
   }
@@ -355,7 +360,11 @@ int *find_similarity(char **URL_list, int num_URLs) {
       // When prev_comparison == -2, that means we don't have an index value for it yet
       int prev_comparison = -2;
       int curr_index = 1;
-      int URL_comparison = compare_URLs(*(URL_list + i), *(URL_list + j));
+      char buf1[MAX_URL_LENGTH] = "";
+      char buf2[MAX_URL_LENGTH] = "";
+      strcpy(buf1, *(URL_list + i));
+      strcpy(buf2, *(URL_list + j));
+      int URL_comparison = compare_URLs(buf1, buf2);
 
       if (i != j && URL_comparison != -1) {
         // The URLs are the same, except for the word at index URL_comparison, compare with the rest of the indices
@@ -418,6 +427,21 @@ void free_tree(struct node *curr_node) {
 }
 
 
+// Frees a branch of curr_node given a URL path
+void free_branch(struct node *curr_node, char URL[MAX_URL_LENGTH]) {
+  char *token = strtok(URL, "/");
+
+  while (token != NULL) {
+    printf("%s\n", token);
+    token[strcspn(token, "\n")] = 0;
+    
+
+    token = strtok(NULL, "/");
+  }
+  printf("\n");
+}
+
+
 // Main algorithm to cluster a .txt file of URLs
 void cluster_urls(char *url_filename) {
   FILE *url_file = fopen(url_filename, "r");
@@ -444,19 +468,15 @@ void cluster_urls(char *url_filename) {
 
               if (value == NULL) {
                 // No URL match, create new dictionary child
-
                 if (fork_point == NULL) {
                     fork_point = curr_node;
-                    // printf("RECORDING FORK POINT: %s\n", curr_node->name);
                 }
 
-                // printf("CREATING NEW NODE %s FOR %s\n", token, curr_node->name);
                 struct node *child = init_node(token);
                 add_child(curr_node, child);
                 curr_node = child;
               } else {
                 // URL matches so far, use existing child
-                // printf("USING EXISTING NODE %s FROM %s\n", value->name, curr_node->name);
                 curr_node = value;
               }
           }
@@ -468,27 +488,39 @@ void cluster_urls(char *url_filename) {
           char **URL_list = (char **) malloc(sizeof(char *) * num_URLs);
           char empty_URL[MAX_URL_LENGTH] = "";
           DFS_find_URLs(fork_point, 0, URL_list, empty_URL);
+
+          printf("FORK POINT REACHED!\n");
+          print_URLs(URL_list, num_URLs);
+
           int *index_list = find_similarity(URL_list, num_URLs);
 
           if (index_list) {
             printf("SIMILARITY EXISTS!\n");
+            print_URLs(URL_list, num_URLs);
+
             int diff_index = *(index_list + SIMILARITY_THRESHOLD);
 
-
-            // Save one copy of the duplicate end of the URL
-
-
             // Delete duplicate branches
-            for (int i = 1; i < SIMILARITY_THRESHOLD; i++) {
+            for (int i = 0; i < SIMILARITY_THRESHOLD; i++) {
               int URL_list_index = *(index_list + i);
-              char *URL = *(URL_list + URL_list_index);
+              // char *URL = *(URL_list + URL_list_index);
+              char *URL = URL_list[URL_list_index];
               printf("%s\n", URL);
 
-              
+              // free_branch(fork_point, URL);
             }
+
+            // Replace remaining branch param at diff index with {arg}
           }
       }
   }
+
+  int num_URLs_total = DFS_enumerate(root);
+  printf("num_URLs_total: %d\n", num_URLs_total);
+  char **URL_list_total = (char **) malloc(sizeof(char *) * num_URLs_total);
+  char empty_URL[MAX_URL_LENGTH] = "";
+  DFS_find_URLs(root, 0, URL_list_total, empty_URL);
+  print_URLs(URL_list_total, num_URLs_total);
 
   fclose(url_file);
   return;
