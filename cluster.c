@@ -428,17 +428,30 @@ void free_tree(struct node *curr_node) {
 
 
 // Frees a branch of curr_node given a URL path
-void free_branch(struct node *curr_node, char URL[MAX_URL_LENGTH]) {
-  char *token = strtok(URL, "/");
-
-  while (token != NULL) {
-    printf("%s\n", token);
-    token[strcspn(token, "\n")] = 0;
-    
-
+// Returns true if curr branch is "alone", else false
+bool free_branch(struct node *curr_node, char URL[MAX_URL_LENGTH], bool is_init) {
+  char *token = NULL;
+  if (is_init) {
+    token = strtok(URL, "/");
+  } else {
     token = strtok(NULL, "/");
   }
-  printf("\n");
+  
+  if (token != NULL) {
+    token[strcspn(token, "\n")] = 0;
+    struct node *child = GetDataWithKey(curr_node->dict, token);
+    bool is_alone = (child->num_children <= 1) && free_branch(child, URL, false);
+
+    // if (is_alone) {
+    //   free_tree(curr_node);
+    // } 
+
+    printf("NODE %s IS %d\n", token, is_alone);
+
+    return is_alone;
+  }
+
+  return true;
 }
 
 
@@ -498,11 +511,9 @@ void cluster_urls(char *url_filename) {
             // Delete duplicate branches
             for (int i = 0; i < SIMILARITY_THRESHOLD; i++) {
               int URL_list_index = *(index_list + i);
-              char *URL = *(URL_list + URL_list_index);
               char *URL = URL_list[URL_list_index];
-              printf("%s\n", URL);
-
-              // free_branch(fork_point, URL);
+              // printf("%s\n", URL);
+              free_branch(fork_point, URL, true);
             }
 
             // Replace remaining branch param at diff index with {arg}
