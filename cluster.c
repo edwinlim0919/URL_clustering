@@ -427,6 +427,26 @@ void free_tree(struct node *curr_node) {
 }
 
 
+// Given a URL string, returns a pointer to a node that can be freed (doesn't have extra children)
+bool find_lone_node(struct node *curr_node, char URL[MAX_URL_LENGTH], bool is_init, struct node **lone_node) {
+  char *token = NULL;
+  
+  if (is_init) {
+    token = strtok(URL, "/");
+  } else {
+    token = strtok(NULL, "/");
+  }
+
+  if (token != NULL) {
+    token[strcspn(token, "\n")] = 0;
+    struct node *child = GetDataWithKey(curr_node->dict, token);
+    
+  }
+
+  return true;
+}
+
+
 // Frees a branch of curr_node given a URL path
 // Returns true if curr branch is "alone", else false
 bool free_branch(struct node *curr_node, char URL[MAX_URL_LENGTH], bool is_init) {
@@ -512,8 +532,9 @@ void cluster_urls(char *url_filename) {
             for (int i = 0; i < SIMILARITY_THRESHOLD; i++) {
               int URL_list_index = *(index_list + i);
               char *URL = URL_list[URL_list_index];
-              // printf("%s\n", URL);
-              free_branch(fork_point, URL, true);
+              struct node **lone_node = (struct payload **) malloc(sizeof(struct node **));
+        
+              // free_branch(fork_point, URL, true);
             }
 
             // Replace remaining branch param at diff index with {arg}
